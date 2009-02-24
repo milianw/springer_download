@@ -1,0 +1,5 @@
+- add speed to progress bar
+- add -o switch to arguments (name of output file)
+- add -c switch to arguments (list of chapters, with ranges, i.e.: -c 1,4,13-25
+- use progress bar when downloading sources
+- use multithreading for simultanieous downloads
