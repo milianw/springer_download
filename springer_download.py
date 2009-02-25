@@ -133,6 +133,8 @@ def main(argv):
         shutil.rmtree(tempDir)
         error("could not transliterate book title %s" % bookTitle)
     
+    bookTitlePath = bookTitlePath.replace("/", "-")
+    
     bookTitlePath = curDir + "/%s.pdf" % bookTitlePath
     
     if len(fileList) == 1:
