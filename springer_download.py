@@ -33,7 +33,7 @@ def main(argv):
             link = arg
     if link == "":
         error("You have to define a link.")
-    if not re.match("https?://(www.)?springerlink.com/content/[a-z0-9]+(/\?[^/]*)?$", link):
+    if not re.match("https?://(www\.)?springerlink.(com|de)/content/[a-z0-9]+(/\?[^/]*)?$", link):
         error("Bad link given. See LINK below.")
     
     # remove all arguments from link
@@ -134,6 +134,7 @@ def main(argv):
         error("could not transliterate book title %s" % bookTitle)
     
     bookTitlePath = bookTitlePath.replace("/", "-")
+    bookTitlePath = re.sub("\s+", "_", bookTitlePath)
     
     bookTitlePath = curDir + "/%s.pdf" % bookTitlePath
     
