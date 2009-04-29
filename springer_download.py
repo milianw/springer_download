@@ -90,7 +90,7 @@ def main(argv):
                 continue
             if chapterLink[:7] == "http://":
                 continue
-            chapters.append(match.group(1))
+            chapters.append(chapterLink)
 
         # get next page
         match = re.search(r'<a href="([^"]+)">Next</a>', page)
