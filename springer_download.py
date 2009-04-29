@@ -48,6 +48,10 @@ def main(argv):
     # remove all arguments from link
     link = re.sub(r"/?\?[^/]*$", "/", link)
 
+    #make sure the link ends on a slash
+    if link[-1] != "/":
+      link += "/"
+
     baseLink = link
 
     chapters = list()
