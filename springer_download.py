@@ -42,7 +42,7 @@ def main(argv):
 
     if link == "":
         error("You have to define a link.")
-    if not re.match("https?://(www\.)?springerlink.(com|de)/content/[a-z0-9]+(/\?[^/]*)?$", link):
+    if not re.match("https?://(www\.)?springerlink.(com|de)/content/[a-z0-9\-]+(/\?[^/]*)?$", link):
         error("Bad link given. See LINK below.")
 
     # remove all arguments from link
