@@ -11,6 +11,10 @@ import tempfile
 import shutil
 import subprocess
 
+# Set some kind of User-Agent so we don't get blocked by SpringerLink
+class SpringerURLopener(urllib.FancyURLopener):
+    version = "Mozilla"
+
 # validate CLI arguments and start downloading
 def main(argv):
     if not findInPath("pdftk"):
@@ -58,7 +62,7 @@ def main(argv):
     hasFrontMatter = False
     hasBackMatter = False
 
-    loader = urllib.FancyURLopener()
+    loader = SpringerURLopener();
 
     bookTitle = ""
 
