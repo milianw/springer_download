@@ -70,6 +70,9 @@ def main(argv):
         except IOError, e:
             error("Bad link given (%s)" % e)
 
+        if re.search(r'403 Forbidden', page):
+            error("Could not access page: 403 Forbidden error.")
+
         if bookTitle == "":
             match = re.search(r'<h2 class="MPReader_Profiles_SpringerLink_Content_PrimitiveHeadingControlName">([^<]+)</h2>', page)
             if not match or match.group(1).strip() == "":
