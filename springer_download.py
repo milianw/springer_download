@@ -222,12 +222,13 @@ def _reporthook(numblocks, blocksize, filesize, url=None):
     sys.stdout.write("%-66s%3d%%" % (url, percent))
 
 def geturl(url, dst):
+    downloader = SpringerURLopener()
     if sys.stdout.isatty():
-        response = urllib.urlretrieve(url, dst,
+        response = downloader.retrieve(url, dst,
                            lambda nb, bs, fs, url=url: _reporthook(nb,bs,fs,url))
         sys.stdout.write("\n")
     else:
-        response = urllib.urlretrieve(url, dst)
+        response = downloader.retrieve(url, dst)
 
     return response
 
