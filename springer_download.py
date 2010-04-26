@@ -49,6 +49,10 @@ def main(argv):
                 error("Bad link given. See example link.")
             hash = match.group("hash")
 
+    if hash == "":
+      usage()
+      error("Either a link or a hash must be given.")
+
     baseLink = link = "http://springerlink.com/content/" + hash + "/"
     chapters = list()
     loader = SpringerURLopener();
