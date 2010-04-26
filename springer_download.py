@@ -28,6 +28,7 @@ def main(argv):
         error()
 
     link = ""
+    hash = ""
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
@@ -35,41 +36,31 @@ def main(argv):
             sys.exit()
         elif opt in ("-c", "--content"):
             if link != "":
+                usage()
                 error("-c and -l arguments are mutually exclusive")
-
-            link = "http://springerlink.com/content/" + arg
+            hash = arg
         elif opt in ("-l", "--link"):
-            if link != "":
+            if hash != "":
+                usage()
                 error("-c and -l arguments are mutually exclusive")
+            match = re.match("(https?://)?(www\.)?springer(link)?.(com|de)/(content|.*book)/(?P<hash>[a-z0-9\-]+)/?(\?[^/]*)?$", arg)
+            if not match:
+                usage()
+                error("Bad link given. See example link.")
+            hash = match.group("hash")
 
-            link = arg
-
-    if link == "":
-        error("You have to define a link.")
-    if not re.match("https?://(www\.)?springerlink.(com|de)/content/[a-z0-9\-]+/?(\?[^/]*)?$", link):
-        error("Bad link given. See LINK below.")
-
-    # remove all arguments from link
-    link = re.sub(r"/?\?[^/]*$", "/", link)
-
-    #make sure the link ends on a slash
-    if link[-1] != "/":
-      link += "/"
-
-    baseLink = link
-
+    baseLink = link = "http://springerlink.com/content/" + hash + "/"
     chapters = list()
-    hasFrontMatter = False
-    hasBackMatter = False
-
     loader = SpringerURLopener();
+    curDir = os.getcwd()
 
     bookTitle = ""
+    coverLink = ""
 
     while True:
         # download page source
         try:
-            print "Please wait, link source is being downloaded...\n\t%s" % link
+            print "fetching book information...\n\t%s" % link
             page = loader.open(link).read()
         except IOError, e:
             error("Bad link given (%s)" % e)
@@ -80,22 +71,47 @@ def main(argv):
         if bookTitle == "":
             match = re.search(r'<h2 class="MPReader_Profiles_SpringerLink_Content_PrimitiveHeadingControlName">([^<]+)</h2>', page)
             if not match or match.group(1).strip() == "":
-                error("Could not evaluate book title - bad link?")
+                error("Could not evaluate book title - bad link %s" % link)
             else:
                 bookTitle = match.group(1).strip()
-            print "\nThe book you are trying to download is called '%s'\n" % bookTitle
+            # subtitle
+            match = re.search(r'<div class="[^"]*subtitle">([^<]+)</div>', page)
+            if match:
+                bookTitle += " - " + match.group(1).strip()
 
+            # edition
+            match = re.search(r'<td class="labelName">Edition</td><td class="labelValue">([^<]+)</td>', page)
+            if match:
+                bookTitle += " " + match.group(1).strip()
+
+            # year
+            match = re.search(r'<td class="labelName">Copyright</td><td class="labelValue">([^<]+)</td>', page)
+            if match:
+                bookTitle += " " + match.group(1).strip()
+
+            # publisher
+            match = re.search(r'<td class="labelName">Publisher</td><td class="labelValue">([^<]+)</td>', page)
+            if match:
+                bookTitle += " - " + match.group(1).strip()
+
+            # coverimage
+            match = re.search(r'<div class="coverImageFooter">[^<]*<a href="([^"]+)"', page)
+            if match:
+                coverLink = "http://springerlink.com/" + match.group(1)
+
+            bookTitlePath = curDir + "/%s.pdf" % sanitizeFilename(bookTitle)
+            if bookTitlePath == "":
+                error("could not transliterate book title %s" % bookTitle)
+            if os.path.isfile(bookTitlePath):
+                error("%s already downloaded" % bookTitlePath)
+
+            print "\nNow Trying to download book '%s'\n" % bookTitle
+            #error("foo")
 
         # get chapters
         for match in re.finditer('href="([^"]+.pdf)"', page):
             chapterLink = match.group(1)
-            if chapterLink == "back-matter.pdf":
-                hasBackMatter = True
-                continue
-            if chapterLink == "front-matter.pdf":
-                hasFrontMatter = True
-                continue
-            if chapterLink[:7] == "http://":
+            if chapterLink[:7] == "http://": # skip external links
                 continue
             chapters.append(chapterLink)
 
@@ -106,19 +122,12 @@ def main(argv):
         else:
             break
 
-    if hasFrontMatter:
-        chapters.insert(0, "front-matter.pdf")
-
-    if hasBackMatter:
-        chapters.append("back-matter.pdf")
-
     if len(chapters) == 0:
         error("No chapters found - bad link?")
 
     print "found %d chapters" % len(chapters)
 
     # setup
-    curDir = os.getcwd()
     tempDir = tempfile.mkdtemp()
     os.chdir(tempDir)
 
@@ -130,34 +139,26 @@ def main(argv):
             chapterLink = "http://springerlink.com" + chapterLink
         else:
             chapterLink = baseLink + chapterLink
-
+        chapterLink = re.sub("/[^/]+/\.\.", "", chapterLink)
         print "downloading chapter %d/%d" % (i, len(chapters))
         localFile, mimeType = geturl(chapterLink, "%d.pdf" % i)
 
         if mimeType.gettype() != "application/pdf":
             os.chdir(curDir)
             shutil.rmtree(tempDir)
-            error("downloaded chapter %s has invalid mime type %s - are you allowed to download it?" % (chapterLink, mimeType.gettype()))
+            error("downloaded chapter %s has invalid mime type %s - are you allowed to download %s?" % (chapterLink, mimeType.gettype(), bookTitle))
 
         fileList.append(localFile)
         i += 1
 
+    if coverLink != "":
+        print "downloading front cover from %s" % coverLink
+        localFile, mimeType = geturl(coverLink, "frontcover")
+        if os.system("convert %s %s.pdf" % (localFile, localFile)) == 0:
+            fileList.insert(0, localFile + ".pdf")
+
+
     print "merging chapters"
-
-    p1 = subprocess.Popen(["echo", bookTitle], stdout=subprocess.PIPE)
-    p2 = subprocess.Popen(["iconv", "-f", "UTF-8", "-t" ,"ASCII//TRANSLIT"], stdin=p1.stdout, stdout=subprocess.PIPE)
-    bookTitlePath = p2.communicate()[0]
-    bookTitlePath = bookTitlePath.strip()
-    if bookTitlePath == "":
-        os.chdir(curDir)
-        shutil.rmtree(tempDir)
-        error("could not transliterate book title %s" % bookTitle)
-
-    bookTitlePath = bookTitlePath.replace("/", "-")
-    bookTitlePath = re.sub("\s+", "_", bookTitlePath)
-
-    bookTitlePath = curDir + "/%s.pdf" % bookTitlePath
-
     if len(fileList) == 1:
       shutil.move(fileList[0], bookTitlePath)
     else:
@@ -168,7 +169,7 @@ def main(argv):
     shutil.rmtree(tempDir)
 
     print "book %s was successfully downloaded, it was saved to %s" % (bookTitle, bookTitlePath)
-
+    log("downloaded %s chapters (%.2fMiB) of %s\n" % (len(chapters),  os.path.getsize(bookTitlePath)/2.0**20, bookTitle))
     sys.exit()
 
 # give a usage message
@@ -196,11 +197,17 @@ LINK:
 # raise an error and quit
 def error(msg=""):
     if msg != "":
+        log("ERR: " + msg + "\n")
         print "\nERROR: %s\n" % msg
-    usage()
     sys.exit(2)
 
     return None
+
+# log to file
+def log(msg=""):
+    logFile = open('springer_download.log', 'a')
+    logFile.write(msg)
+    logFile.close()
 
 # based on http://stackoverflow.com/questions/377017/test-if-executable-exists-in-python
 def findInPath(prog):
@@ -232,6 +239,10 @@ def geturl(url, dst):
 
     return response
 
+def sanitizeFilename(filename):
+    p1 = subprocess.Popen(["echo", filename], stdout=subprocess.PIPE)
+    p2 = subprocess.Popen(["iconv", "-f", "UTF-8", "-t" ,"ASCII//TRANSLIT"], stdin=p1.stdout, stdout=subprocess.PIPE)
+    return re.sub("\s+", "_", p2.communicate()[0].strip().replace("/", "-"))
 
 # start program
 if __name__ == "__main__":
