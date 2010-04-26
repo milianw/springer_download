@@ -13,7 +13,7 @@ import subprocess
 
 # Set some kind of User-Agent so we don't get blocked by SpringerLink
 class SpringerURLopener(urllib.FancyURLopener):
-    version = "Mozilla"
+    version = "Mozilla 5.0"
 
 # validate CLI arguments and start downloading
 def main(argv):
