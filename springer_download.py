@@ -61,6 +61,8 @@ def main(argv):
     bookTitle = ""
     coverLink = ""
 
+    front_matter = False
+
     while True:
         # download page source
         try:
@@ -117,6 +119,15 @@ def main(argv):
             chapterLink = match.group(1)
             if chapterLink[:7] == "http://": # skip external links
                 continue
+
+            if re.search(r'front-matter.pdf', chapterLink):
+                if front_matter:
+                    continue
+                else:
+                    front_matter = True
+            if re.search(r'back-matter.pdf', chapterLink) and re.search(r'<a href="([^"]+)">Next</a>', page):
+                continue
+
             chapters.append(chapterLink)
 
         # get next page
