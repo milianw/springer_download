@@ -17,8 +17,12 @@ class SpringerURLopener(urllib.FancyURLopener):
 
 # validate CLI arguments and start downloading
 def main(argv):
-    if not findInPath("pdftk"):
-        error("You have to install pdftk.")
+    if findInPath("pdftk"):
+        pdfcat = lambda fileList, bookTitlePath: "pdftk %s cat output '%s'" % (" ".join(fileList), bookTitlePath)
+    elif findInPath("stapler"):
+        pdfcat = lambda fileList, bookTitlePath: "stapler cat %s '%s'" % (" ".join(fileList), bookTitlePath)
+    else:
+        error("You have to install pdftk (http://www.accesspdf.com/pdftk/) or stapler (http://github.com/hellerbarde/stapler).")
     if not findInPath("iconv"):
         error("You have to install iconv.")
 
@@ -177,7 +181,7 @@ def main(argv):
     if len(fileList) == 1:
       shutil.move(fileList[0], bookTitlePath)
     else:
-      os.system("pdftk %s cat output '%s'" % (" ".join(fileList), bookTitlePath))
+      os.system(pdfcat(fileList, bookTitlePath))
 
     # cleanup
     os.chdir(curDir)
