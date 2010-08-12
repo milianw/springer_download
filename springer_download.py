@@ -57,7 +57,8 @@ def main(argv):
       usage()
       error("Either a link or a hash must be given.")
 
-    baseLink = link = "http://springerlink.com/content/" + hash + "/"
+    baseLink = "http://springerlink.com/content/" + hash + "/"
+    link = baseLink + "contents/"
     chapters = list()
     loader = SpringerURLopener();
     curDir = os.getcwd()
@@ -79,35 +80,34 @@ def main(argv):
             error("Could not access page: 403 Forbidden error.")
 
         if bookTitle == "":
-            match = re.search(r'<h2 class="MPReader_Profiles_SpringerLink_Content_PrimitiveHeadingControlName">([^<]+)</h2>', page)
+            match = re.search(r'<h1[^<]+class="title">([^<]+)(?:<br/>\s*<span class="subtitle">([^<]+)</span>\s*)?</h1>', page)
             if not match or match.group(1).strip() == "":
                 error("Could not evaluate book title - bad link %s" % link)
             else:
                 bookTitle = match.group(1).strip()
             # subtitle
-            match = re.search(r'<div class="[^"]*subtitle">([^<]+)</div>', page)
-            if match:
-                bookTitle += " - " + match.group(1).strip()
+            if match and match.group(2).strip() != "":
+                bookTitle += " - " + match.group(2).strip()
 
             # edition
-            match = re.search(r'<td class="labelName">Edition</td><td class="labelValue">([^<]+)</td>', page)
-            if match:
-                bookTitle += " " + match.group(1).strip()
+            #match = re.search(r'<td class="labelName">Edition</td><td class="labelValue">([^<]+)</td>', page)
+            #if match:
+                #bookTitle += " " + match.group(1).strip()
 
-            # year
-            match = re.search(r'<td class="labelName">Copyright</td><td class="labelValue">([^<]+)</td>', page)
-            if match:
-                bookTitle += " " + match.group(1).strip()
+            ## year
+            #match = re.search(r'<td class="labelName">Copyright</td><td class="labelValue">([^<]+)</td>', page)
+            #if match:
+                #bookTitle += " " + match.group(1).strip()
 
-            # publisher
-            match = re.search(r'<td class="labelName">Publisher</td><td class="labelValue">([^<]+)</td>', page)
-            if match:
-                bookTitle += " - " + match.group(1).strip()
+            ## publisher
+            #match = re.search(r'<td class="labelName">Publisher</td><td class="labelValue">([^<]+)</td>', page)
+            #if match:
+                #bookTitle += " - " + match.group(1).strip()
 
             # coverimage
-            match = re.search(r'<div class="coverImageFooter">[^<]*<a href="([^"]+)"', page)
+            match = re.search(r'<div class="coverImage" style="background-image: url\(/content/([^/]+)/cover-medium\.gif\)">', page)
             if match:
-                coverLink = "http://springerlink.com/" + match.group(1)
+                coverLink = "http://springerlink.com/contents/" + match.group(1) + "/cover-large.gif"
 
             bookTitlePath = curDir + "/%s.pdf" % sanitizeFilename(bookTitle)
             if bookTitlePath == "":
@@ -119,7 +119,7 @@ def main(argv):
             #error("foo")
 
         # get chapters
-        for match in re.finditer('href="([^"]+.pdf)"', page):
+        for match in re.finditer('href="([^"]+\.pdf)"', page):
             chapterLink = match.group(1)
             if chapterLink[:7] == "http://": # skip external links
                 continue
@@ -199,7 +199,7 @@ def usage():
 Options:
   -h, --help              Display this usage message
   -l LINK, --link=LINK    defines the link of the book you intend to download
-  -c HASH, --content=HASH builds the link from a given HASH (see below)
+  -c ISBN, --content=ISBN builds the link from a given ISBN (see below)
 
 You have to set exactly one of these options.
 
@@ -207,10 +207,10 @@ LINK:
   The link to your the detail page of the ebook of your choice on SpringerLink.
   It lists book metadata and has a possibly paginated list of the chapters of the book.
   It has the form:
-    http://springerlink.com/content/HASH/STUFF
-  Where: HASH is a string consisting of lower-case, latin chars and numbers.
+    http://springerlink.com/content/ISBN/STUFF
+  Where: ISBN is a string consisting of lower-case, latin chars and numbers.
          It alone identifies the book you intent do download.
-         STUFF is optional and looks like ?p=...&p_o=... or similar. Will be stripped.
+         STUFF is optional and looks like #section=... or similar. It will be stripped.
 """ % os.path.basename(sys.argv[0])
 
 # raise an error and quit

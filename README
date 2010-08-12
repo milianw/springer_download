@@ -24,6 +24,7 @@ The script downloads all chapters of a book and merges them into one PDF file.
 Options:
   -h, --help              Display this usage message
   -l LINK, --link=LINK    define the link of the book to start downloading
+  -c ISBN, --content=ISBN define the book to download by it's ISBN
 
 LINK:
   The link to your the detail page of the ebook of your choice on SpringerLink.
