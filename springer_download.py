@@ -86,7 +86,7 @@ def main(argv):
             else:
                 bookTitle = match.group(1).strip()
             # subtitle
-            if match and match.group(2).strip() != "":
+            if match and match.group(2) and match.group(2).strip() != "":
                 bookTitle += " - " + match.group(2).strip()
 
             # edition
