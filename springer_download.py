@@ -15,14 +15,25 @@ import subprocess
 class SpringerURLopener(urllib.FancyURLopener):
     version = "Mozilla 5.0"
 
-# validate CLI arguments and start downloading
-def main(argv):
-    if findInPath("pdftk"):
-        pdfcat = lambda fileList, bookTitlePath: "pdftk %s cat output '%s'" % (" ".join(fileList), bookTitlePath)
-    elif findInPath("stapler"):
-        pdfcat = lambda fileList, bookTitlePath: "stapler cat %s '%s'" % (" ".join(fileList), bookTitlePath)
+def pdfcat(fileList, bookTitlePath):
+    if findInPath("pdftk") != False:
+        command = [findInPath("pdftk")]
+        command.extend(fileList)
+        command.extend(["cat", "output", bookTitlePath])
+        subprocess.Popen(command, shell=False).wait()
+    elif findInPath("stapler") != False:
+        command = [findInPath("stapler"), "cat"]
+        command.extend(fileList)
+        command.append(bookTitlePath)
+        subprocess.Popen(command, shell=False).wait()
     else:
         error("You have to install pdftk (http://www.accesspdf.com/pdftk/) or stapler (http://github.com/hellerbarde/stapler).")
+
+# validate CLI arguments and start downloading
+def main(argv):
+    if not findInPath("pdftk") and not findInPath("stapler"):
+        error("You have to install pdftk (http://www.accesspdf.com/pdftk/) or stapler (http://github.com/hellerbarde/stapler).")
+
     if not findInPath("iconv"):
         error("You have to install iconv.")
 
@@ -146,7 +157,7 @@ def main(argv):
 
     print "found %d chapters" % len(chapters)
 
-    # setup
+    # setup; set tempDir as working directory
     tempDir = tempfile.mkdtemp()
     os.chdir(tempDir)
 
@@ -181,7 +192,7 @@ def main(argv):
     if len(fileList) == 1:
       shutil.move(fileList[0], bookTitlePath)
     else:
-      os.system(pdfcat(fileList, bookTitlePath))
+      pdfcat(fileList, bookTitlePath)
 
     # cleanup
     os.chdir(curDir)
@@ -233,7 +244,7 @@ def findInPath(prog):
     for path in os.environ["PATH"].split(os.pathsep):
         exe_file = os.path.join(path, prog)
         if os.path.exists(exe_file) and os.access(exe_file, os.X_OK):
-            return True
+            return exe_file
     return False
 
 # based on http://mail.python.org/pipermail/python-list/2005-April/319818.html
