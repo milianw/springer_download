@@ -94,11 +94,13 @@ def main(argv):
             error("Could not access page: 403 Forbidden error.")
 
         if bookTitle == "":
-            match = re.search(r'<h1[^<]+class="title">([^<]+)(?:<br/>\s*<span class="subtitle">([^<]+)</span>\s*)?</h1>', page)
+            match = re.search(r'<h1[^<]+class="title">(.+?)(?:<br/>\s*<span class="subtitle">(.+?)</span>\s*)?</h1>', page, re.S)
             if not match or match.group(1).strip() == "":
                 error("Could not evaluate book title - bad link %s" % link)
             else:
                 bookTitle = match.group(1).strip()
+                # remove tags, e.g. <sub>
+                bookTitle = re.sub(r'<[^>]*?>', '', bookTitle)
             # subtitle
             if match and match.group(2) and match.group(2).strip() != "":
                 bookTitle += " - " + match.group(2).strip()
