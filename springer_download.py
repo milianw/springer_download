@@ -281,3 +281,5 @@ def sanitizeFilename(filename):
 # start program
 if __name__ == "__main__":
     main(sys.argv[1:])
+
+# kate: indent-width 4; replace-tabs on;
