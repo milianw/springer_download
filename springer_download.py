@@ -142,6 +142,10 @@ def main(argv):
                     front_matter = True
             if re.search(r'back-matter.pdf', chapterLink) and re.search(r'<a href="([^"]+)">Next</a>', page):
                 continue
+            #skip backmatter if it is in list as second chapter - will be there at the end of the book also
+            if re.search(r'back-matter.pdf', chapterLink):
+                if len(chapters)<2:
+                    continue
 
             chapters.append(chapterLink)
 
