@@ -197,9 +197,9 @@ def main(argv):
     if merge:
         print "merging chapters"
         if len(fileList) == 1:
-        shutil.move(fileList[0], bookTitlePath)
+            shutil.move(fileList[0], bookTitlePath)
         else:
-        pdfcat(fileList, bookTitlePath)
+            pdfcat(fileList, bookTitlePath)
 
         # cleanup
         os.chdir(curDir)
