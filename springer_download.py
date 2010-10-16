@@ -31,19 +31,17 @@ def pdfcat(fileList, bookTitlePath):
 
 # validate CLI arguments and start downloading
 def main(argv):
-    if not findInPath("pdftk") and not findInPath("stapler"):
-        error("You have to install pdftk (http://www.accesspdf.com/pdftk/) or stapler (http://github.com/hellerbarde/stapler).")
-
     if not findInPath("iconv"):
         error("You have to install iconv.")
 
     try:
-        opts, args = getopt.getopt(argv, "hl:c:", ["help", "link=","content="])
+        opts, args = getopt.getopt(argv, "hl:c:n", ["help", "link=", "content=", "no-merge"])
     except getopt.GetoptError:
-        error()
+        error("Could not parse command line arguments.")
 
     link = ""
     hash = ""
+    merge = True
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
@@ -63,10 +61,15 @@ def main(argv):
                 usage()
                 error("Bad link given. See example link.")
             hash = match.group("hash")
+        elif opt in ("-n", "--no-merge"):
+            merge = False
 
     if hash == "":
       usage()
       error("Either a link or a hash must be given.")
+
+    if merge and not findInPath("pdftk") and not findInPath("stapler"):
+        error("You have to install pdftk (http://www.accesspdf.com/pdftk/) or stapler (http://github.com/hellerbarde/stapler).")
 
     baseLink = "http://springerlink.com/content/" + hash + "/"
     link = baseLink + "contents/"
@@ -191,18 +194,21 @@ def main(argv):
         if os.system("convert %s %s.pdf" % (localFile, localFile)) == 0:
             fileList.insert(0, localFile + ".pdf")
 
+    if merge:
+        print "merging chapters"
+        if len(fileList) == 1:
+        shutil.move(fileList[0], bookTitlePath)
+        else:
+        pdfcat(fileList, bookTitlePath)
 
-    print "merging chapters"
-    if len(fileList) == 1:
-      shutil.move(fileList[0], bookTitlePath)
+        # cleanup
+        os.chdir(curDir)
+        shutil.rmtree(tempDir)
+
+        print "book %s was successfully downloaded, it was saved to %s" % (bookTitle, bookTitlePath)
     else:
-      pdfcat(fileList, bookTitlePath)
+        print "book %s was successfully downloaded, unmerged chapters can be found in %s" % (bookTitle, tempDir)
 
-    # cleanup
-    os.chdir(curDir)
-    shutil.rmtree(tempDir)
-
-    print "book %s was successfully downloaded, it was saved to %s" % (bookTitle, bookTitlePath)
     log("downloaded %s chapters (%.2fMiB) of %s\n" % (len(chapters),  os.path.getsize(bookTitlePath)/2.0**20, bookTitle))
     sys.exit()
 
@@ -215,6 +221,8 @@ Options:
   -h, --help              Display this usage message
   -l LINK, --link=LINK    defines the link of the book you intend to download
   -c ISBN, --content=ISBN builds the link from a given ISBN (see below)
+
+  -n, --no-merge          Only download the chapters but don't merge them into a single PDF.
 
 You have to set exactly one of these options.
 
