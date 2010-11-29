@@ -145,7 +145,7 @@ def main(argv):
                     continue
                 else:
                     front_matter = True
-            if re.search(r'back-matter.pdf', chapterLink) and re.search(r'<a href="([^"]+)">Next</a>', page):
+            if re.search(r'back-matter.pdf', chapterLink) and re.search(r'<a href="([^"#]+)"[^>]*>Next</a>', page):
                 continue
             #skip backmatter if it is in list as second chapter - will be there at the end of the book also
             if re.search(r'back-matter.pdf', chapterLink):
@@ -155,7 +155,7 @@ def main(argv):
             chapters.append(chapterLink)
 
         # get next page
-        match = re.search(r'<a href="([^"]+)">Next</a>', page)
+        match = re.search(r'<a href="([^"#]+)"[^>]*>Next</a>', page)
         if match:
             link = "http://springerlink.com" + match.group(1).replace("&amp;", "&")
         else:
