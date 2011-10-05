@@ -34,6 +34,10 @@ def main(argv):
     if not findInPath("iconv"):
         error("You have to install iconv.")
 
+    #Test if convert is installed
+    if os.system("convert --version > /dev/null 2>&1")!=0:
+        error("You have to install the packet ImageMagick in order to use convert")
+
     try:
         opts, args = getopt.getopt(argv, "hl:c:n", ["help", "link=", "content=", "no-merge"])
     except getopt.GetoptError:
