@@ -208,10 +208,11 @@ def main(argv):
         shutil.rmtree(tempDir)
 
         print "book %s was successfully downloaded, it was saved to %s" % (bookTitle, bookTitlePath)
-    else:
+        log("downloaded %s chapters (%.2fMiB) of %s\n" % (len(chapters),  os.path.getsize(bookTitlePath)/2.0**20, bookTitle))
+    else: #HL: if merge=False
         print "book %s was successfully downloaded, unmerged chapters can be found in %s" % (bookTitle, tempDir)
+        log("downloaded %s chapters of %s\n" % (len(chapters), bookTitle))
 
-    log("downloaded %s chapters (%.2fMiB) of %s\n" % (len(chapters),  os.path.getsize(bookTitlePath)/2.0**20, bookTitle))
     sys.exit()
 
 # give a usage message
