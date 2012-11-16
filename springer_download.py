@@ -75,7 +75,7 @@ def main(argv):
     if merge and not findInPath("pdftk") and not findInPath("stapler"):
         error("You have to install pdftk (http://www.accesspdf.com/pdftk/) or stapler (http://github.com/hellerbarde/stapler).")
 
-    baseLink = "http://springerlink.com/content/" + hash + "/"
+    baseLink = "http://www.springerlink.com/content/" + hash + "/"
     link = baseLink + "contents/"
     chapters = list()
     loader = SpringerURLopener();
@@ -90,7 +90,7 @@ def main(argv):
         # download page source
         try:
             print "fetching book information...\n\t%s" % link
-            page = loader.open(link).read()
+            page = loader.open(link,"MUD=MP").read()
         except IOError, e:
             error("Bad link given (%s)" % e)
 
@@ -127,7 +127,7 @@ def main(argv):
             # coverimage
             match = re.search(r'<div class="coverImage" title="Cover Image" style="background-image: url\(/content/([^/]+)/cover-medium\.gif\)">', page)
             if match:
-                coverLink = "http://springerlink.com/content/" + match.group(1) + "/cover-large.gif"
+                coverLink = "http://www.springerlink.com/content/" + match.group(1) + "/cover-large.gif"
 
             bookTitlePath = curDir + "/%s.pdf" % sanitizeFilename(bookTitle)
             if bookTitlePath == "":
@@ -161,7 +161,7 @@ def main(argv):
         # get next page
         match = re.search(r'<a href="([^"#]+)"[^>]*>Next</a>', page)
         if match:
-            link = "http://springerlink.com" + match.group(1).replace("&amp;", "&")
+            link = "http://www.springerlink.com" + match.group(1).replace("&amp;", "&")
         else:
             break
 
@@ -179,7 +179,7 @@ def main(argv):
 
     for chapterLink in chapters:
         if chapterLink[0] == "/":
-            chapterLink = "http://springerlink.com" + chapterLink
+            chapterLink = "http://www.springerlink.com" + chapterLink
         else:
             chapterLink = baseLink + chapterLink
         chapterLink = re.sub("/[^/]+/\.\.", "", chapterLink)
@@ -237,7 +237,7 @@ LINK:
   The link to your the detail page of the ebook of your choice on SpringerLink.
   It lists book metadata and has a possibly paginated list of the chapters of the book.
   It has the form:
-    http://springerlink.com/content/ISBN/STUFF
+    http://www.springerlink.com/content/ISBN/STUFF
   Where: ISBN is a string consisting of lower-case, latin chars and numbers.
          It alone identifies the book you intent do download.
          STUFF is optional and looks like #section=... or similar. It will be stripped.
@@ -281,10 +281,10 @@ def geturl(url, dst):
     downloader = SpringerURLopener()
     if sys.stdout.isatty():
         response = downloader.retrieve(url, dst,
-                           lambda nb, bs, fs, url=url: _reporthook(nb,bs,fs,url))
+                           lambda nb, bs, fs, url=url: _reporthook(nb,bs,fs,url), "MUD=MP")
         sys.stdout.write("\n")
     else:
-        response = downloader.retrieve(url, dst)
+        response = downloader.retrieve(url, dst, None, "MUD=MP")
 
     return response
 
