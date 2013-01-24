@@ -1,3 +1,12 @@
+= WARNING =
+
+This script is apparently against the licensing contract between universities and Springer.
+See e.g.: http://www.bib.hm.edu/aktuelles/news/newsdetail_9984.de.html
+
+I do not actively maintain this script anymore. Please use an alternative or one of the
+excellent forks of this script which add some more functionality. See e.g.
+http://tovotu.de/dev/518-Neuer-SpringerLink-Downloader/
+
 = Download Script for Ebooks hosted on Springerlink.com =
 
 author:	
